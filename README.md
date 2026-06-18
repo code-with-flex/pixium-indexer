@@ -15,7 +15,8 @@ Without the indexer running, the backend cannot serve up-to-date canvas state or
 ## Tech Stack
 
 - **Node.js + TypeScript** — runtime and language
-- **Stellar SDK** — event streaming and ledger polling
+- **NestJS** — application framework
+- **Stellar SDK** — event polling via Stellar RPC
 - **PostgreSQL** — persistent store for all indexed game data
 - **Redis** — canvas state cache (kept in sync with every pixel event)
 
@@ -26,14 +27,15 @@ Without the indexer running, the backend cannot serve up-to-date canvas state or
 ### Prerequisites
 
 - Node.js 20+
+- pnpm
 - PostgreSQL
 - Redis
-- Access to a Stellar Horizon or RPC node (testnet or mainnet)
+- Access to a Stellar RPC node (testnet or mainnet)
 
 ### Install
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### Environment
@@ -53,13 +55,13 @@ START_LEDGER=<ledger_to_start_indexing_from>
 ### Run
 
 ```bash
-npm run start
+pnpm run start
 ```
 
 ### Run (Development with watch)
 
 ```bash
-npm run dev
+pnpm run start:dev
 ```
 
 ---
@@ -96,22 +98,26 @@ The indexer polls Soroban contract events from the Stellar RPC, starting from a 
 ## Project Structure
 
 ```
-indexer/
-├── src/
-│   ├── events/
-│   │   ├── pixel-placed.ts     # Handle PixelPlaced events
-│   │   ├── quest-completed.ts  # Handle QuestCompleted events
-│   │   ├── faction-created.ts  # Handle FactionCreated events
-│   │   ├── vote-cast.ts        # Handle VoteCast events
-│   │   └── round-ended.ts      # Handle RoundEnded events
-│   ├── db/
-│   │   ├── postgres.ts         # PostgreSQL client and queries
-│   │   └── redis.ts            # Redis client and canvas state helpers
-│   ├── stellar/
-│   │   └── listener.ts         # Stellar event polling / streaming
-│   └── index.ts                # Entry point
-├── .env.example
-└── package.json
+src/
+├── indexer/
+│   ├── indexer.module.ts       # IndexerModule
+│   └── indexer.service.ts      # Polling loop and event dispatch
+├── events/
+│   ├── events.module.ts        # EventsModule
+│   └── handlers/
+│       ├── pixel-placed.handler.ts
+│       ├── quest-completed.handler.ts
+│       ├── faction-created.handler.ts
+│       ├── vote-cast.handler.ts
+│       └── round-ended.handler.ts
+├── stellar/
+│   ├── stellar.module.ts       # StellarModule
+│   └── stellar.service.ts      # Stellar RPC client
+├── db/
+│   ├── db.module.ts            # DbModule
+│   ├── postgres.service.ts     # PostgreSQL client
+│   └── redis.service.ts        # Redis client
+└── main.ts                     # Entry point
 ```
 
 ---
@@ -127,8 +133,8 @@ The indexer stores its last processed ledger in PostgreSQL. On restart, it picks
 See the root [contributing guide](#). Run lint and format checks before submitting a PR.
 
 ```bash
-npm run lint
-npm run format
+pnpm run lint
+pnpm run format
 ```
 
 Branch format: `feature/<issue-number>-short-description`
