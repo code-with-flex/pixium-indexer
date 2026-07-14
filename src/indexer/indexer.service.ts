@@ -104,21 +104,23 @@ export class IndexerService implements OnModuleInit, OnModuleDestroy {
         });
 
     for (const event of response.events) {
-      this.dispatch(event);
+      await this.dispatch(event);
     }
 
     this.cursor = response.cursor;
     await this.cursorRepository.set(this.contractId, this.cursor);
   }
 
-  private dispatch(event: Parameters<typeof decodeEvent>[0]): void {
+  private async dispatch(
+    event: Parameters<typeof decodeEvent>[0],
+  ): Promise<void> {
     const decoded = decodeEvent(event);
 
     switch (decoded.name) {
       case 'pixel_placed': {
         const data = decoded.data as { x: number; y: number; color: number };
         const owner = decoded.topics[0] as string;
-        this.pixelPlacedHandler.handle({ owner, ...data });
+        await this.pixelPlacedHandler.handle({ owner, ...data });
         break;
       }
       default:
